@@ -155,8 +155,50 @@ namespace InventorySystem
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 BackColor = Color.White
             };
-            cmbCategory.Items.AddRange(new string[] { "Lotions", "Moisturizing", "Cleanser", "Sunscreen", "Supplements" });
-            formCard.Controls.Add(cmbCategory);
+            // Category + Add Category panel
+            Panel categoryRow = new Panel
+            {
+                Location = new Point(20, 380), // just above the button row
+                Size = new Size(360, 35),
+                BackColor = Color.Transparent
+            };
+
+            // Category dropdown
+            cmbCategory = new ComboBox
+            {
+                Size = new Size(300, 30),
+                Font = new Font("Segoe UI", 10),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.White
+            };
+            cmbCategory.Items.Clear();
+            var categories = DatabaseHelper.LoadAllCategories();
+            cmbCategory.Items.AddRange(categories.ToArray());
+
+            // Add category button
+            Button btnAddCategory = new Button
+            {
+                Text = "+",
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Size = new Size(35, 30),
+                BackColor = ColorTranslator.FromHtml("#D1FAE5"),
+                ForeColor = Color.Black,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnAddCategory.FlatAppearance.BorderSize = 0;
+            btnAddCategory.Click += BtnAddCategory_Click;
+
+            // Add to category row
+            categoryRow.Controls.Add(cmbCategory);
+            cmbCategory.Location = new Point(0, 0);
+            categoryRow.Controls.Add(btnAddCategory);
+            btnAddCategory.Location = new Point(cmbCategory.Right + 5, 0);
+
+            // Add category row to formCard
+            formCard.Controls.Add(categoryRow);
+
+
 
             // Add Product Button
             btnAddProduct = new Button
@@ -327,15 +369,27 @@ namespace InventorySystem
             // Add the button row to the formCard
             formCard.Controls.Add(buttonRow);
 
-            picProductImage = new PictureBox
-            {
-                Location = new Point(20, 550),
-                Size = new Size(100, 100),
-                SizeMode = PictureBoxSizeMode.Zoom,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            formCard.Controls.Add(picProductImage);
+           
+            //formCard.Controls.Add(picProductImage);
 
+        }
+        private void BtnAddCategory_Click(object sender, EventArgs e)
+        {
+            string input = Microsoft.VisualBasic.Interaction.InputBox("Enter new category name:", "Add Category", "");
+
+            if (!string.IsNullOrWhiteSpace(input))
+            {
+                try
+                {
+                    DatabaseHelper.AddCategory(input);
+                    LoadCategories();
+                    cmbCategory.SelectedItem = input; // auto-select
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error adding category: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void AdjustLayout()
@@ -424,7 +478,7 @@ namespace InventorySystem
 
                     // Reset image selection
                     selectedImagePath = "";
-                    picProductImage.Image = null;
+                   // picProductImage.Image = null;
                 }
                 catch (Exception ex)
                 {
@@ -432,6 +486,12 @@ namespace InventorySystem
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+        }
+        private void LoadCategories()
+        {
+            cmbCategory.Items.Clear();
+            var categories = DatabaseHelper.LoadAllCategories();
+            cmbCategory.Items.AddRange(categories.ToArray());
         }
 
         private void BtnUploadImage_Click(object sender, EventArgs e)
@@ -479,7 +539,7 @@ namespace InventorySystem
                     File.Copy(sourcePath, destPath, true);
 
                     // Display the image
-                    picProductImage.Image = Image.FromFile(destPath);
+                    //picProductImage.Image = Image.FromFile(destPath);
 
                     // Store relative path in database
                     selectedImagePath = Path.GetRelativePath(storageRoot, destPath);

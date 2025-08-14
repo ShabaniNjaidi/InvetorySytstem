@@ -19,6 +19,8 @@ namespace InventorySystem
         private bool isMaximized = true;
         private string userRole = "Owner"; // Default
         private Color accentColor = ColorTranslator.FromHtml("#7C3AED");
+        public List<Product> Products { get; set; } = new List<Product>();
+
         public string ImageFolderPath { get; private set; }
 
         public MainForm(string role = "Owner")

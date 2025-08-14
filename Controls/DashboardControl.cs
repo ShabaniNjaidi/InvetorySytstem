@@ -48,6 +48,17 @@ namespace InventorySystem
 
             foreach (var act in activities)
             {
+                // Split activity into main text and time part
+                string mainText = act;
+                string timeText = "";
+                int openParen = act.LastIndexOf("(");
+                int closeParen = act.LastIndexOf(")");
+                if (openParen != -1 && closeParen != -1 && closeParen > openParen)
+                {
+                    timeText = act.Substring(openParen + 1, closeParen - openParen - 1); // inside (...)
+                    mainText = act.Substring(0, openParen).Trim();
+                }
+
                 var activityItem = new Panel
                 {
                     BackColor = Color.White,
@@ -78,7 +89,7 @@ namespace InventorySystem
 
                 var activityLabel = new Label
                 {
-                    Text = act,
+                    Text = mainText,
                     Font = new Font("Segoe UI", 10, FontStyle.Regular),
                     ForeColor = ColorTranslator.FromHtml("#334155"),
                     AutoSize = false,
@@ -91,13 +102,13 @@ namespace InventorySystem
 
                 using (Graphics g = CreateGraphics())
                 {
-                    SizeF textSize = g.MeasureString(act, activityLabel.Font, activityLabel.MaximumSize.Width);
+                    SizeF textSize = g.MeasureString(mainText, activityLabel.Font, activityLabel.MaximumSize.Width);
                     activityItem.Height = Math.Max(60, (int)textSize.Height + 30);
                 }
 
                 var timeLabel = new Label
                 {
-                    Text = DateTime.Now.ToString("hh:mm tt"),
+                    Text = timeText,
                     Font = new Font("Segoe UI", 8, FontStyle.Regular),
                     ForeColor = ColorTranslator.FromHtml("#94A3B8"),
                     AutoSize = true,
@@ -142,6 +153,7 @@ namespace InventorySystem
             };
             activitiesContainer.Controls.Add(shadowPanel);
         }
+
 
 
         private void InitializeUI()

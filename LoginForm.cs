@@ -1,4 +1,5 @@
-﻿using InventorySystem.Helpers;
+﻿using InventorySystem;
+using InventorySystem.Helpers;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
@@ -183,33 +184,44 @@ namespace InvetorySytstem
                 return;
             }
 
-            string? detectedRole = DatabaseHelper.GetUserRole(username, password);
+            var credentials = DatabaseHelper.GetUserCredentials(username, password);
 
-            if (detectedRole != null)
+            if (credentials != null)
             {
-                // 🔐 Validate role match if expectedRole was set (from WelcomeForm)
-                if (!string.IsNullOrEmpty(expectedRole) && !string.Equals(expectedRole, detectedRole, StringComparison.OrdinalIgnoreCase))
+                int userId = credentials.Value.UserId;
+                string detectedRole = credentials.Value.Role;
+
+                SessionData.CurrentUserId = userId;
+                SessionData.CurrentUsername = username;
+                SessionData.CurrentRole = detectedRole;
+
+
+                if (detectedRole != null)
                 {
-                    MessageBox.Show($"This user is not authorized as a '{expectedRole}'. Detected role: '{detectedRole}'.", "Role Mismatch", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
+                    // 🔐 Validate role match if expectedRole was set (from WelcomeForm)
+                    if (!string.IsNullOrEmpty(expectedRole) && !string.Equals(expectedRole, detectedRole, StringComparison.OrdinalIgnoreCase))
+                    {
+                        MessageBox.Show($"This user is not authorized as a '{expectedRole}'. Detected role: '{detectedRole}'.", "Role Mismatch", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (chkRememberMe.Checked)
+                        appConfig.RememberedUsername = username;
+                    else
+                        appConfig.RememberedUsername = null;
+
+                    ConfigManager.SaveConfig(appConfig);
+
+                    MessageBox.Show($"Welcome, {username} ({detectedRole})!", "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    allowSafeClose = true;
+                    LoginSuccessful?.Invoke(this, (username, detectedRole));
+                    this.Close();
                 }
-
-                if (chkRememberMe.Checked)
-                    appConfig.RememberedUsername = username;
                 else
-                    appConfig.RememberedUsername = null;
-
-                ConfigManager.SaveConfig(appConfig);
-
-                MessageBox.Show($"Welcome, {username} ({detectedRole})!", "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                allowSafeClose = true;
-                LoginSuccessful?.Invoke(this, (username, detectedRole));
-                this.Close();
-            }
-            else
-            {
-                MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                {
+                    MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
